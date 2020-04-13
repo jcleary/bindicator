@@ -9,7 +9,7 @@ from datetime import date
 
 def lambda_handler(event, context):
     today = date.today()
-    today = date(2020, 4, 15)
+    # today = date(2020, 4, 15)
     tomorrow = today + datetime.timedelta(days=1)
 
     bin_data = {
@@ -52,10 +52,9 @@ def lambda_handler(event, context):
     return "No bins today!"
 
 def send_sms(number, message):
+    print(f"Sending to {number}")
     session = boto3.Session()
-
     client = session.client('sns')
-
     client.publish(PhoneNumber=number, Message=message)
 
 # lambda_handler('n', 'n')
