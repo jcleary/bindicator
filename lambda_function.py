@@ -3,15 +3,13 @@ import base64
 import os
 import urllib
 import datetime
+import boto3
 from urllib import request, parse
 from datetime import date
 
-TWILIO_SMS_URL = "https://api.twilio.com/2010-04-01/Accounts/{}/Messages.json"
-TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
-
 def lambda_handler(event, context):
     today = date.today()
+    today = date(2020, 4, 15)
     tomorrow = today + datetime.timedelta(days=1)
 
     bin_data = {
@@ -37,30 +35,27 @@ def lambda_handler(event, context):
             these_bins.append(bin_colour)
 
     if (len(these_bins) > 0):
-        body = "The following bins will be collected tomorrow: " + (", ".join(these_bins))
-        print(body)
+        bullet = "👉"
+        message = f"Hey, this is The Bindicator\n\nThe following bins will be collected tomorrow:\n  {bullet} " + (f"\n  {bullet} ".join(these_bins))
+        message = message + "\n\nTo unsubscribe, send STOP to 07775785078"
+        print(message)
 
-        from_number = '+19045670539'
-        to_number = '+447775785078'
+        numbers = os.environ.get("PHONE_NUMBERS")
+        number_list = numbers.split(':')
 
-        populated_url = TWILIO_SMS_URL.format(TWILIO_ACCOUNT_SID)
-        post_params = {"To": to_number, "From": from_number, "Body": body}
-
-        data = parse.urlencode(post_params).encode()
-        req = request.Request(populated_url)
-
-        authentication = "{}:{}".format(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-        base64string = base64.b64encode(authentication.encode('utf-8'))
-        req.add_header("Authorization", "Basic %s" % base64string.decode('ascii'))
-
-        try:
-            # perform HTTP POST request
-            with request.urlopen(req, data) as f:
-                print("Twilio returned {}".format(str(f.read().decode('utf-8'))))
-        except Exception as e:
-            # something went wrong!
-            return e
+        for to_number in number_list:
+            send_sms(to_number, message)
 
         return "SMS sent successfully!"
 
+    print('no bins')
     return "No bins today!"
+
+def send_sms(number, message):
+    session = boto3.Session()
+
+    client = session.client('sns')
+
+    client.publish(PhoneNumber=number, Message=message)
+
+# lambda_handler('n', 'n')
