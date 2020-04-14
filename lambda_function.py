@@ -34,7 +34,7 @@ def lambda_handler(event, context):
         if (days_between.days % (bin_info["frequency"] * 7) == 0):
             these_bins.append(bin_colour)
 
-    if (len(these_bins) > 0):
+    if these_bins:
         bullet = "👉"
         message = f"Hey, this is The Bindicator\n\nThe following bins will be collected tomorrow:\n  {bullet} " + (f"\n  {bullet} ".join(these_bins))
         message = message + "\n\nTo unsubscribe, send STOP to 07775785078"
@@ -52,9 +52,13 @@ def lambda_handler(event, context):
     return "No bins today!"
 
 def send_sms(number, message):
-    print(f"Sending to {number}")
-    session = boto3.Session()
-    client = session.client('sns')
-    client.publish(PhoneNumber=number, Message=message)
+    try:
+        print(f"Sending to {number}")
+        session = boto3.Session()
+        client = session.client('sns')
+        client.publish(PhoneNumber=number, Message=message)
+    except:
+        print(f"Error sending message to {number}")
+
 
 # lambda_handler('n', 'n')
